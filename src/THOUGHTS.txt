@@ -1,0 +1,3 @@
+Mutation: Should be same as i defined before
+Recombination: This is important as it should only work between figures of the same type. For instance, recombination of two rectangles should take one vertex for each of the parents and combine them into a new rectangle. Pretty straight forward
+Fitness function: fitness function should only make sense in the context of the image.       

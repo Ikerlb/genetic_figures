@@ -1,0 +1,13 @@
+[package]
+name = "genetic_figures"
+version = "0.1.0"
+authors = ["ikerlb"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+image = "*"
+clap = "~2.33"
+rand = "0.7"
+time = "*"
