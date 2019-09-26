@@ -1,5 +1,7 @@
 use image::{RgbaImage,Rgba,Pixel};
 
+
+
 pub fn average_color(target:&RgbaImage) -> (u8,u8,u8){
     let (mut sr,mut sg,mut sb,mut count)=(0,0,0,0);
     for tp in target.pixels(){

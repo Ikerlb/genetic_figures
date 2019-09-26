@@ -6,11 +6,17 @@ mod figure;
 mod minimize;
 mod ellipse;
 mod ga;
+mod img;
+mod scanline;
 
-use image::{imageops,FilterType};
+use image::{imageops,FilterType,ImageBuffer,load_from_memory,save_buffer};
 use time::PreciseTime;
 use clap::{Arg, App};
 use state::State;
+use std::fs::File;
+
+const SIZE: usize = 256;
+
 fn main() {
     let matches = App::new("figures")
                     .version("1.0")
@@ -39,18 +45,18 @@ fn main() {
                         .required(false)
                         .help("alpha value for the figures. 1-255")
                         .takes_value(true))
-                    .arg(Arg::with_name("resize")
-                        .short("r")
-                        .long("resize")
+                    .arg(Arg::with_name("outputWidth")
+                        .short("w")
+                        .long("width")
                         .required(false)
-                        .help("resize target image to this value")
+                        .help("width of output image")
                         .takes_value(true))
-                    .arg(Arg::with_name("outputSize")
-                        .short("s")
-                        .long("size")
-                        .required(false)
-                        .help("size of output image")
-                        .takes_value(true))
+                    .arg(Arg::with_name("outputHeight")
+                         .short("h")
+                         .long("height")
+                         .required(false)
+                         .help("height of output image")
+                         .takes_value(true))
                     .arg(Arg::with_name("mode")
                         .short("m")
                         .long("mode")
@@ -74,6 +80,15 @@ fn main() {
                         .long("verbose")
                         .required(false)
                         .help("runs program in verbose mode"))
+                    .arg(Arg::with_name("cairo")
+                         .short("c")
+                         .long("cairo")
+                         .required(false)
+                         .help("output image using cairo"))
+                    .arg(Arg::with_name("sweep")
+                         .long("sweep")
+                         .required(false)
+                         .help("hill descent best solution from genetic algorithm"))
                 .get_matches();
 
     let input_file=matches.value_of("inputFile").unwrap();
@@ -82,18 +97,10 @@ fn main() {
                         .unwrap_or("127")
                         .parse::<u8>()
                         .unwrap();
-    let resize:u32=matches.value_of("resize")
-                        .unwrap_or("256")
-                        .parse::<u32>()
-                        .unwrap();
     let n=matches.value_of("numberOfFigures")
                  .unwrap()
                  .parse::<u32>()
                  .unwrap();
-    let output_size=matches.value_of("size")
-                           .unwrap_or("1024")
-                           .parse::<u32>()
-                           .unwrap();
     let mode=matches.value_of("mode")
                    .unwrap_or("1")
                    .parse::<u32>()
@@ -106,24 +113,50 @@ fn main() {
                  .unwrap_or("100")
                  .parse::<u32>()
                  .unwrap();
+    let sweep=matches.is_present("sweep");
+    let resize=SIZE as u32;
     let verbose=matches.is_present("verbose");
+    let use_cairo=matches.is_present("cairo");
     let t=image::open(input_file).unwrap().to_rgba();
-    let target=imageops::resize(&t,resize,resize,FilterType::Nearest);
-    let mut state=State::new(target,alpha);
+    let (w,h)=t.dimensions();
+    let output_width=match matches.value_of("width"){
+                        Some(s) => s.parse::<u32>().unwrap(), 
+                        None => w,
+                     };
+    let output_height=match matches.value_of("height"){
+                        Some(s) => s.parse::<u32>().unwrap(),
+                        None => h,
+                     };
+    let ftn=FilterType::Nearest;
+    let ftl=FilterType::Lanczos3;
+    let target=imageops::resize(&t,resize,resize,ftl);
+    let mut state=State::new(target,alpha,output_width as i32,output_height as i32);
     println!("Starting...");
     let start=PreciseTime::now();
     for i in 0..n{
         let fstart=PreciseTime::now();
-        state.step(g,p,mode);
+        let c=state.step(g,p,mode,sweep);
         let fend=PreciseTime::now();
-        v(verbose,format!("Figure {} took {} seconds. {}% complete.",i+1,fstart.to(fend),((i+1)*100)/n));
+        let dur=fstart.to(fend);    
+        v(verbose,format!("Figure {} took {} seconds. {}% complete. {}",i+1,dur,((i+1)*100)/n,c));
     }
     let end=PreciseTime::now();
     println!("Process ended in {} seconds.",start.to(end));
-    let img=imageops::resize(&state.current,output_size,output_size,FilterType::Nearest);
-    img.save(output_file).unwrap();
-}
 
+    if use_cairo{
+        let mut file = File::create(output_file).unwrap();
+        state.surface.write_to_png(&mut file); 
+    }
+    else{
+        //TODO: remove this ew... fuchila... guacala!!!!!
+        let img_buf:Option<ImageBuffer<image::Rgba<u8>,&[u8]>>=ImageBuffer::from_raw(resize,resize,&(state.current.buf));
+        assert!(img_buf.is_some());
+    
+        let resized_img=imageops::resize(&(img_buf.unwrap()),output_width, output_height,ftn);
+        resized_img.save(output_file);
+
+    }
+}
 fn v(mode:bool,s:String){
     if mode {
         println!("{}",s);

@@ -1,3 +1,9 @@
 Mutation: Should be same as i defined before
 Recombination: This is important as it should only work between figures of the same type. For instance, recombination of two rectangles should take one vertex for each of the parents and combine them into a new rectangle. Pretty straight forward
 Fitness function: fitness function should only make sense in the context of the image.       
+cargo run --release -- -i img/lenna.png -o img/lenna_out_mr.png -n 1500 -r 256 -m 1 -s 1024 -v -a 255 -p 10 -g 100
+Process ended in PT25.424064291S seconds.
+
+ROADMAP TO SUCCESS:
+
+Vanilla array of known size -> Pass this vanilla struct to state -> Modify ALL imgutil arguments to instead receive vanilla. DONE 

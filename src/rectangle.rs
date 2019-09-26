@@ -1,5 +1,8 @@
 use rand::{Rng,rngs::ThreadRng};
 use super::util::*;
+use super::scanline::Scanline;
+use cairo::Context;
+use std::cmp;
 
 #[derive(Debug,Clone)]
 pub struct Rectangle{
@@ -13,6 +16,15 @@ pub struct Rectangle{
 
 impl Rectangle{
     
+    pub fn draw(&self,context:&Context){
+        let x1=cmp::min(self.x1,self.x2) as f64;
+        let x2=cmp::max(self.x1,self.x2) as f64;
+        let y1=cmp::min(self.y1,self.y2) as f64;
+        let y2=cmp::max(self.y1,self.y2) as f64;
+        context.rectangle(x1,y1,x2-x1,y2-y1);
+    }
+
+
     pub fn crossover(&self,other:&Rectangle) -> Rectangle{
         Rectangle{
             x_limit:self.x_limit,
@@ -37,14 +49,15 @@ impl Rectangle{
         }
     }
 
-    pub fn scanlines(&mut self) -> Vec<(u32,u32,u32)>{
-        let mut vec = Vec::new();
-        let (x1,y1,x2,y2)=self.bounds();
+    pub fn scanlines<'a>(&mut self,lines:&'a mut Vec<Scanline>) -> &'a[Scanline]{
+        let (x1,y1,x2,y2)=self.bounds_as_usize();
         for j in y1..=y2{
-            vec.push((j,x1,x2));
+            lines[j].set(x1,x2,j);
         }
-        vec
+        &lines[y1..=y2]
     }
+
+    
 
     // fn set_figure(&mut self,other:&Self){
     //     self.x1=other.x1;
@@ -83,5 +96,10 @@ impl Rectangle{
             self.y2=aux;
         }
         (self.x1,self.y1,self.x2,self.y2)
+    }
+
+    fn bounds_as_usize(&mut self) -> (usize,usize,usize,usize){
+        let (x1,y1,x2,y2)=self.bounds();
+        (x1 as usize,y1 as usize,x2 as usize,y2 as usize)
     }
 }

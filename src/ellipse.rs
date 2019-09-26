@@ -1,5 +1,8 @@
 use rand::{Rng,rngs::ThreadRng};
 use super::util::*;
+use super::scanline::Scanline;
+use cairo::Context;
+use std::f64::consts::PI;
 
 #[derive(Debug,Clone)]
 pub struct Ellipse{
@@ -13,6 +16,22 @@ pub struct Ellipse{
 
 impl Ellipse{
     
+    //TODO: test!!
+    pub fn draw(&self,context:&Context){
+        context.save();
+        let x=self.x as f64;
+        let y=self.y as f64;
+        let xr=self.xr as f64;
+        let yr=self.yr as f64;
+        let width=xr*2.0;
+        let height=yr*2.0;
+        //context.translate((x+width)/2.0,(y+height)/2.0);
+        context.translate(x,y);
+        context.scale(xr,yr);
+        context.arc(0.0,0.0,1.0,0.0,2.0*PI);
+        context.restore();
+    }
+
     pub fn crossover(&self,other:&Ellipse) -> Ellipse{
         Ellipse{
             x_limit:self.x_limit,
@@ -38,18 +57,13 @@ impl Ellipse{
         }
     }
 
-    // fn set_figure(&mut self,other:&Self){
-    //     self.x=other.x;
-    //     self.y=other.y;
-    //     self.xr=other.xr;
-    //     self.yr=other.yr;
-    // }
-
-    //maybe do better?
-    pub fn scanlines(&mut self) -> Vec<(u32,u32,u32)>{
+    //maybe do better? TEST!
+    pub fn scanlines<'a>(&mut self,lines:&'a mut Vec<Scanline>) -> &'a[Scanline]{
         let c1=self.xr as f32/self.yr as f32;
         let c2=(self.yr*self.yr) as f32;
-        let mut vec = Vec::new();
+        let (mut ymin,mut ymax)=((self.y_limit-1) as i32,0u32);
+        //TODO: ..=self.yr?
+        let yr=self.yr as usize;
         for dj in 0..self.yr{
             let y1=self.y as i32 - dj as i32;
             let y2=self.y+dj;
@@ -63,14 +77,28 @@ impl Ellipse{
                 x2=self.x_limit-1;
             }
             if y1>=0 && y1<self.y_limit as i32{
-                vec.push((y1 as u32,x1 as u32,x2));
+                //vec.push(y1 as usize,x1 as usize,x2));
+                lines[y1 as usize].set(x1 as usize,x2 as usize,y1 as usize);
+                if y1<ymin {
+                    ymin=y1;
+                }
             }
             if y2<self.y_limit && dj>0{
-                vec.push((y2,x1 as u32,x2));
+                //vec.push((y2,x1 as usize,x2));
+                lines[y2 as usize].set(x1 as usize,x2 as usize,y2 as usize);
+                if y2>ymax {
+                    ymax=y2;
+                }
             }
         }
-        vec
-    }
+        if ymin==(self.y_limit as i32)-1{
+            ymin=0;
+        }
+        if ymax==0{
+            ymax=self.y_limit-1;
+        }
+        &lines[(ymin as usize)..=(ymax as usize)]
+    } 
 
     // fn scanlines_increment(&mut self){
     //
@@ -88,6 +116,6 @@ impl Ellipse{
             xr,
             y,
             yr,
-        }
+       }
     }
 }

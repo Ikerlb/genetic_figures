@@ -1,7 +1,8 @@
 use rand::rngs::ThreadRng;
 use super::rectangle::Rectangle;
 use super::ellipse::Ellipse;
-
+use super::scanline::Scanline;
+use cairo::Context;
 
 #[derive(Debug,Clone)]
 pub enum Figure{
@@ -18,10 +19,17 @@ impl Figure{
         };
     }
 
-    pub fn scanlines(&mut self) -> Vec<(u32,u32,u32)>{
+    pub fn scanlines<'a>(&mut self,lines:&'a mut Vec<Scanline>) -> &'a[Scanline]{
         match self{
-            Figure::Rectangle(rect) => rect.scanlines(),
-            Figure::Ellipse(ellipse) => ellipse.scanlines(),
+            Figure::Rectangle(rect) => rect.scanlines(lines),
+            Figure::Ellipse(ellipse) => ellipse.scanlines(lines),
+        }
+    }
+
+    pub fn draw(&self,context:&Context){
+        match self{
+            Figure::Rectangle(rect) => rect.draw(&context),
+            Figure::Ellipse(ellipse) => ellipse.draw(&context),
         }
     }
 

@@ -11,3 +11,5 @@ image = "*"
 clap = "~2.33"
 rand = "0.7"
 time = "*"
+png = "0.11.0"
+cairo-rs = { version = "0.2.0", features = ["png"] }
