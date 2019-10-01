@@ -1,5 +1,4 @@
 mod state;
-mod imgutil;
 mod rectangle;
 mod util;
 mod figure;
