@@ -1,6 +1,4 @@
-use rand::{Rng,rngs::ThreadRng};
-use super::rectangle::Rectangle;
-use super::ellipse::Ellipse;
+use rand::Rng;
 use super::figure::Figure;
 use super::state::State;
 

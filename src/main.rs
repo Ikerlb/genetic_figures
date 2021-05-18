@@ -7,8 +7,10 @@ mod ellipse;
 mod ga;
 mod img;
 mod scanline;
+mod bezier;
+mod line;
 
-use image::{imageops,FilterType,ImageBuffer,load_from_memory,save_buffer};
+use image::{imageops,FilterType,ImageBuffer};
 use time::PreciseTime;
 use clap::{Arg, App};
 use state::State;
@@ -44,13 +46,13 @@ fn main() {
                         .required(false)
                         .help("alpha value for the figures. 1-255")
                         .takes_value(true))
-                    .arg(Arg::with_name("outputWidth")
+                    .arg(Arg::with_name("width")
                         .short("w")
                         .long("width")
                         .required(false)
                         .help("width of output image")
                         .takes_value(true))
-                    .arg(Arg::with_name("outputHeight")
+                    .arg(Arg::with_name("height")
                          .short("h")
                          .long("height")
                          .required(false)
@@ -144,15 +146,14 @@ fn main() {
 
     if use_cairo{
         let mut file = File::create(output_file).unwrap();
-        state.surface.write_to_png(&mut file); 
+        state.surface.write_to_png(&mut file).expect("Cair: Error writing to png"); 
     }
     else{
         //TODO: remove this ew... fuchila... guacala!!!!!
         let img_buf:Option<ImageBuffer<image::Rgba<u8>,&[u8]>>=ImageBuffer::from_raw(resize,resize,&(state.current.buf));
         assert!(img_buf.is_some());
-    
         let resized_img=imageops::resize(&(img_buf.unwrap()),output_width, output_height,ftn);
-        resized_img.save(output_file);
+        resized_img.save(output_file).expect("Error writing file");
 
     }
 }

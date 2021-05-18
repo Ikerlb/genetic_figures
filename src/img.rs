@@ -1,5 +1,5 @@
 use super::SIZE;
-use image::{Pixel, Rgba, RgbaImage};
+use image::{Pixel, RgbaImage};
 use super::scanline::Scanline;
 
 use std::fmt;
@@ -121,7 +121,7 @@ impl Img{
     }
 
     //self is current
-    pub fn compute_color(&self,target:&Img,scanlines:&[Scanline],alpha:u8) -> Color{
+    pub fn compute_color(&self,target:&Img,scanlines:&Vec<Scanline>,alpha:u8) -> Color{
         let (mut sr,mut sg,mut sb,mut count)=(0,0,0,0);
         let a=255f32/alpha as f32;
         for sl in scanlines{
@@ -130,8 +130,8 @@ impl Img{
                 let tp=target.get_color(i,j);
                 let cp=self.get_color(i,j);
 
-                let (cr,cg,cb,ca)=cp.unpack_as_f32();
-                let (tr,tg,tb,ta)=tp.unpack_as_f32();
+                let (cr,cg,cb,_)=cp.unpack_as_f32();
+                let (tr,tg,tb,_)=tp.unpack_as_f32();
             
                 sr+=(a*(tr-cr)+cr) as u32;
                 sg+=(a*(tg-cg)+cg) as u32;
@@ -142,7 +142,7 @@ impl Img{
         Color::new((sr/count) as u8,(sg/count) as u8,(sb/count) as u8,alpha)
     }
 
-    pub fn composite(&mut self,scanlines:&[Scanline],color:&Color){
+    pub fn composite(&mut self,scanlines:&Vec<Scanline>,color:&Color){
         for sl in scanlines{
             let (j,s,e) = sl.unpack();
             for i in s..=e{
@@ -155,7 +155,7 @@ impl Img{
     }
 
     //self is current
-    pub fn partial_cost(&self,target:&Img,cost:i32,scanlines:&[Scanline],color:&Color) -> i32{
+    pub fn partial_cost(&self,target:&Img,cost:i32,scanlines:&Vec<Scanline>,color:&Color) -> i32{
         let mut new_cost=cost;
         for sl in scanlines{
             let (j,s,e) = sl.unpack();
@@ -241,13 +241,13 @@ impl Img{
         self.buf[n+3]=color.a;
     }
 
-    pub fn new()->Img{
+    /*pub fn new()->Img{
         Img{
             buf:[0; Img::BSIZE],
             w: SIZE,
             h: SIZE,
         }
-    }
+    }*/
 
     pub fn from_rgba_image(target:&RgbaImage)->Img{
         let mut idx=0;
@@ -296,10 +296,10 @@ impl Img{
         }      
     }
     
-    pub fn print(&self){
+    /*pub fn print(&self){
         for i in &self.buf[..]{
             print!("{},",i);
         }
-    }
+    }*/
 
 }

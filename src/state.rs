@@ -1,7 +1,7 @@
-use image::{RgbaImage};
-use super::{figure::Figure,minimize,ga::GeneticAlgorithm,scanline::Scanline};
-use super::img::{Img,Color};
-use cairo::{ImageSurface,Surface,Context,Format};
+use image::RgbaImage;
+use super::{figure::Figure,minimize,ga::GeneticAlgorithm};
+use super::img::Img;
+use cairo::{ImageSurface,Context,Format};
 
 use rand::rngs::ThreadRng;
 
@@ -12,7 +12,6 @@ pub struct State{
     pub dimensions: (u32,u32),
     pub cost:i32,
     pub rng:ThreadRng,
-    scanlines:Vec<Scanline>,
     pub surface:ImageSurface,
     context:Context,
     pub counter:u32,
@@ -33,7 +32,6 @@ impl State{
         let current=Img::from_fn(|_,_| color.unpack());
         let cost=current.full_cost(&target);
         let rng=rand::thread_rng();
-        let scanlines:Vec<Scanline>=vec![Scanline::empty();h as usize];        
         let counter=0;
         let st= State{
             current,
@@ -42,7 +40,6 @@ impl State{
             dimensions,
             cost,
             rng,
-            scanlines,
             context,
             surface,
             counter,
@@ -53,7 +50,6 @@ impl State{
     
 
     pub fn step(&mut self,generations:u32,population:usize,mode:u32,sweep:bool) -> u32{
-        let (w,h)=self.dimensions;
         //self.cost=nc
         let mut ga=GeneticAlgorithm::new(self,population,0.1,mode);
         let gbf=ga.get_best_fitness();
@@ -68,17 +64,16 @@ impl State{
             }
         }
         if sweep{
-            let (mut bf,bc)=minimize::hill_descent(self,500,&bf);
+            let (bfa,bca)=minimize::hill_descent(self,500,&bf);
+            bf=bfa;
+            bc=bca;
         }
-        let sl=bf.scanlines(&mut self.scanlines);
-        let color=self.current.compute_color(&self.target,sl,self.alpha);
+        let sl=bf.scanlines();
+        let color=self.current.compute_color(&self.target,&sl,self.alpha);
         //draw in current
-        self.current.composite(sl,&color);
+        self.current.composite(&sl,&color);
         //draw in context
-        let (r,g,b,a)=color.normalize();
-        bf.draw(&(self.context));
-        self.context.set_source_rgba(r,g,b,a);
-        self.context.fill();
+        bf.draw(&(self.context),&color);
         //set cost
         self.cost=bc;
         let c=self.counter;
@@ -89,8 +84,9 @@ impl State{
     pub fn new_cost(&mut self,figure:&mut Figure) -> i32{
         self.counter+=1;
         //let color=imgutil::compute_color(&self.target,&self.current,&figure.scanlines(),self.alpha);
-        let color=self.current.compute_color(&self.target,figure.scanlines(&mut self.scanlines),self.alpha);
-        self.current.partial_cost(&self.target,self.cost,figure.scanlines(&mut self.scanlines),&color)
+        let scanlines=figure.scanlines();
+        let color=self.current.compute_color(&self.target,&scanlines,self.alpha);
+        self.current.partial_cost(&self.target,self.cost,&scanlines,&color)
         //imgutil::partial_cost(&self.target,&mut self.current,self.cost,&figure.scanlines(),&color)
     }
 

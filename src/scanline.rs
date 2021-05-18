@@ -17,17 +17,17 @@ impl Scanline{
     }
 
 
-    pub fn empty() -> Scanline{
+    /*pub fn empty() -> Scanline{
         Scanline{
             x1:0,
             x2:0,
             y:0
         }
-    }
+    }*/
 
-    pub fn set(&mut self,x1:usize,x2:usize,y:usize){
+    /*pub fn set(&mut self,x1:usize,x2:usize,y:usize){
         self.y=y;
         self.x1=x1;
         self.x2=x2;
-    }
+    }*/
 }   

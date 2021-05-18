@@ -3,6 +3,7 @@ use super::util::*;
 use super::scanline::Scanline;
 use cairo::Context;
 use std::f64::consts::PI;
+use super::img::Color;
 
 #[derive(Debug,Clone)]
 pub struct Ellipse{
@@ -17,19 +18,20 @@ pub struct Ellipse{
 impl Ellipse{
     
     //TODO: test!!
-    pub fn draw(&self,context:&Context){
+    pub fn draw(&self,context:&Context,color:&Color){
         context.save();
         let x=self.x as f64;
         let y=self.y as f64;
         let xr=self.xr as f64;
         let yr=self.yr as f64;
-        let width=xr*2.0;
-        let height=yr*2.0;
         //context.translate((x+width)/2.0,(y+height)/2.0);
         context.translate(x,y);
         context.scale(xr,yr);
         context.arc(0.0,0.0,1.0,0.0,2.0*PI);
         context.restore();
+        let (r,g,b,a)=color.normalize();
+        context.set_source_rgba(r,g,b,a);
+        context.fill();
     }
 
     pub fn crossover(&self,other:&Ellipse) -> Ellipse{
@@ -58,12 +60,11 @@ impl Ellipse{
     }
 
     //maybe do better? TEST!
-    pub fn scanlines<'a>(&mut self,lines:&'a mut Vec<Scanline>) -> &'a[Scanline]{
+    pub fn scanlines(&mut self) -> Vec<Scanline>{
+        let mut lines:Vec<Scanline>=Vec::new();
         let c1=self.xr as f32/self.yr as f32;
         let c2=(self.yr*self.yr) as f32;
-        let (mut ymin,mut ymax)=((self.y_limit-1) as i32,0u32);
         //TODO: ..=self.yr?
-        let yr=self.yr as usize;
         for dj in 0..self.yr{
             let y1=self.y as i32 - dj as i32;
             let y2=self.y+dj;
@@ -78,26 +79,16 @@ impl Ellipse{
             }
             if y1>=0 && y1<self.y_limit as i32{
                 //vec.push(y1 as usize,x1 as usize,x2));
-                lines[y1 as usize].set(x1 as usize,x2 as usize,y1 as usize);
-                if y1<ymin {
-                    ymin=y1;
-                }
+                let sl1=Scanline::new(x1 as usize,x2 as usize,y1 as usize);
+                lines.push(sl1);
             }
             if y2<self.y_limit && dj>0{
                 //vec.push((y2,x1 as usize,x2));
-                lines[y2 as usize].set(x1 as usize,x2 as usize,y2 as usize);
-                if y2>ymax {
-                    ymax=y2;
-                }
+                let sl2=Scanline::new(x1 as usize,x2 as usize,y2 as usize);
+                lines.push(sl2);
             }
         }
-        if ymin==(self.y_limit as i32)-1{
-            ymin=0;
-        }
-        if ymax==0{
-            ymax=self.y_limit-1;
-        }
-        &lines[(ymin as usize)..=(ymax as usize)]
+        lines
     } 
 
     // fn scanlines_increment(&mut self){

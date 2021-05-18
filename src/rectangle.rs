@@ -3,6 +3,7 @@ use super::util::*;
 use super::scanline::Scanline;
 use cairo::Context;
 use std::cmp;
+use super::img::Color;
 
 #[derive(Debug,Clone)]
 pub struct Rectangle{
@@ -16,12 +17,15 @@ pub struct Rectangle{
 
 impl Rectangle{
     
-    pub fn draw(&self,context:&Context){
+    pub fn draw(&self,context:&Context,color:&Color){
         let x1=cmp::min(self.x1,self.x2) as f64;
         let x2=cmp::max(self.x1,self.x2) as f64;
         let y1=cmp::min(self.y1,self.y2) as f64;
         let y2=cmp::max(self.y1,self.y2) as f64;
         context.rectangle(x1,y1,x2-x1,y2-y1);
+        let (r,g,b,a)=color.normalize();
+        context.set_source_rgba(r,g,b,a);
+        context.fill();
     }
 
 
@@ -49,12 +53,14 @@ impl Rectangle{
         }
     }
 
-    pub fn scanlines<'a>(&mut self,lines:&'a mut Vec<Scanline>) -> &'a[Scanline]{
+    pub fn scanlines(&mut self) -> Vec<Scanline>{
+        let mut lines:Vec<Scanline>=Vec::new();
         let (x1,y1,x2,y2)=self.bounds_as_usize();
         for j in y1..=y2{
-            lines[j].set(x1,x2,j);
+            let sl=Scanline::new(x1,x2,j);
+            lines.push(sl);
         }
-        &lines[y1..=y2]
+        lines
     }
 
     
